@@ -10,7 +10,7 @@
 // -----------------------------------------------
 // FUNCTION DEFINITIONS
 // -----------------------------------------------
-void generateCircleVertices(std::vector<float>& vertices, glm::vec3 pos, float radius, int segments);
+void generateCircleVertices(std::vector<float>& circleVertices, glm::vec3 pos, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void collision(glm::vec3& position, glm::vec2& velocity, float radius);
@@ -66,14 +66,23 @@ int main() {
     int segments = 25;
     const float gravitationalConst = -9.81f;
     glm::vec2 velocity(0.85f, 0.0f);
-    std::vector<float> vertices;
+    std::vector<float> circleVertices;
     glm::vec3 position(0.0f, 0.0f, 0.0f);
-    // Generate the circle vertices
-    generateCircleVertices(vertices, position, radius, segments);
+    // Generate the circle circleVertices
+    generateCircleVertices(circleVertices, position, radius, segments);
     // Create the circle shape
     ShapeManager circle;
-    int circleIndex = circle.createShape(vertices.data(), vertices.size() * sizeof(float));
+    int circleIndex = circle.createShape(circleVertices.data(), circleVertices.size() * sizeof(float));
     circle.addAttribute(circleIndex, 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+
+    // -----------------------------------------------
+    // CREATE DIRECTION LINE
+    // -----------------------------------------------
+    float lineVertices[] = { 0.0f, 0.0f, radius, 0.0f };
+    ShapeManager line;
+	int lineIndex = line.createShape(lineVertices, sizeof(lineVertices));
+	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
     // Variables for tracking time
     float lastFrame = 0.0f;
@@ -98,7 +107,7 @@ int main() {
 
 
         // -----------------------------------------------
-        // RENDER
+        // MOVE THE BALL
         // -----------------------------------------------
         // Set uniform
         myShader.use();
@@ -117,8 +126,18 @@ int main() {
         }
         cout << "velocity.x: " << velocity.x << endl;
         cout << "velocity.y: " << velocity.y << endl;
+        
+
+        // -----------------------------------------------
+        // RENDER
+        // -----------------------------------------------
         // Render shape
+        myShader.setVec3("color", glm::vec3(1.0f, 1.0f, 0.0f));
         circle.renderShape(circleIndex, sizeof(float) * 3, GL_TRIANGLE_FAN);
+        // Render Line
+		myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+		glLineWidth(2.0f);
+		line.renderShape(lineIndex, 2, GL_LINES);
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
@@ -129,6 +148,7 @@ int main() {
     // CLEANUP
     // -----------------------------------------------
     circle.~ShapeManager();
+    line.~ShapeManager();
     glfwTerminate();
 
     return 0;
@@ -143,20 +163,20 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void generateCircleVertices(std::vector<float>& vertices, glm::vec3 pos, float radius, int segments) {
+void generateCircleVertices(std::vector<float>& circleVertices, glm::vec3 pos, float radius, int segments) {
     // Center position of the circle
-    vertices.push_back(pos.x);
-    vertices.push_back(pos.y);
-    vertices.push_back(pos.z);
+    circleVertices.push_back(pos.x);
+    circleVertices.push_back(pos.y);
+    circleVertices.push_back(pos.z);
 
-    // Generate circle vertices
+    // Generate circle circleVertices
     for (int i = 0; i <= segments; i++) {
         float angle = (2.0f * glm::pi<float>() * i) / segments;
         float x = radius * cos(angle);
         float y = radius * sin(angle);
-        vertices.push_back(x);
-        vertices.push_back(y);
-        vertices.push_back(pos.z);
+        circleVertices.push_back(x);
+        circleVertices.push_back(y);
+        circleVertices.push_back(pos.z);
     }
 }
 
