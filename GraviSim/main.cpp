@@ -13,13 +13,20 @@
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void collision(glm::vec3& position, glm::vec2& velocity, float radius);
+void updatePhysics();
 
 // -----------------------------------------------
 // GLOBAL VARIABLES
 // -----------------------------------------------
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 800
+float radius = 0.15f;
+float lastFrameTime = 0.0f;
+const float epsilon = 0.2f; // Small threshold for stopping
+const float friction = 0.75f; // Friction factor (adjust as needed)
+const float gravitationalConst = -9.81f;
+glm::vec2 velocity(0.95f, 0.0f);
+glm::vec3 position(0.0f, 0.0f, 0.0f); // Initial position of the circle
 
 using namespace std;
 
@@ -44,7 +51,7 @@ int main() {
 	glfwMakeContextCurrent(window);
 	// Set callback functions
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+	
 	// -----------------------------------------------
 	// LOAD GLAD
 	// -----------------------------------------------
@@ -62,12 +69,8 @@ int main() {
 	// -----------------------------------------------
 	// CREATE CIRCLE
 	// -----------------------------------------------	
-	float radius = 0.15f;
 	int segments = 25;
-	const float gravitationalConst = -9.81f;
-	glm::vec2 velocity(0.45f, 0.0f);
 	std::vector<float> circleVertices;
-	glm::vec3 position(0.0f, 0.0f, 0.0f); // Initial position of the circle
 	// Generate the circle circleVertices
 	generateCircleVertices(circleVertices, radius, segments);
 	// Create the circle shape
@@ -83,19 +86,10 @@ int main() {
 	int lineIndex = line.createShape(lineVertices, sizeof(lineVertices));
 	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
-	// Variables for tracking time
-	float lastFrame = 0.0f;
-	float deltaTime = 0.0f;
-
 	// -----------------------------------------------
 	// MAIN LOOP
 	// -----------------------------------------------
 	while (!glfwWindowShouldClose(window)) {
-		// Calculate deltaTime
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-
 		// Process Input
 		processInput(window);
 
@@ -110,16 +104,11 @@ int main() {
 		// Set uniform
 		myShader.use();
 		myShader.setVec3("position", position);
-		// Move downwards with acceleration 
-		position.x += velocity.x * deltaTime;
-		position.y += velocity.y * deltaTime;
-		velocity.y += gravitationalConst * deltaTime;
-		        
-		// -----------------------------------------------
-		// BORDER COLLISION 
-		// -----------------------------------------------
-		if (velocity.y != 0.0f || velocity.x != 0.0f) {
-		    collision(position, velocity, radius);
+		updatePhysics();
+
+		if (velocity.y == 0.0f && velocity.x == 0.0f) {
+			cout << "Ball stopped";
+			glfwWaitEvents();
 		}
 
 		// -----------------------------------------------
@@ -146,6 +135,29 @@ int main() {
 	glfwTerminate();
 
 	return 0;
+}
+void updatePhysics() {
+    float currentTime = glfwGetTime();
+    float deltaTime = currentTime - lastFrameTime;
+    lastFrameTime = currentTime;
+
+    // Apply gravity
+    velocity.y += gravitationalConst * deltaTime;
+
+    // Update position
+    position.x += velocity.x * deltaTime;
+    position.y += velocity.y * deltaTime;
+
+    // Check collision with borders
+    if (position.x + radius >= 1.0f || position.x - radius <= -1.0f) {
+        velocity.x *= -friction;  // Reverse X velocity and apply friction
+        position.x = (position.x + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+    }
+
+    if (position.y + radius >= 1.0f || position.y - radius <= -1.0f) {
+        velocity.y *= -friction;  // Reverse Y velocity and apply friction
+        position.y = (position.y + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+    }
 }
 
 void processInput(GLFWwindow* window) {
@@ -174,59 +186,10 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 	}
 }
 
-// void collision(glm::vec3& position, glm::vec2& velocity, float radius) {
-//    constexpr float EPSILON = 0.05f;
-//    constexpr float FRICTION = -0.75f;
-//
-//    auto applyCollision = [&](float& pos, float& vel, float boundary) {
-//        if ((vel > 0 && pos >= boundary) || (vel < 0 && pos <= boundary)) {
-//            pos = boundary;
-//            vel *= FRICTION;
-//            if (std::abs(vel) < EPSILON) vel = 0.0f;
-//        }
-//        };
-//
-//    applyCollision(position.x, velocity.x, glm::clamp(position.x, -1.0f + radius, 1.0f - radius));
-//    applyCollision(position.y, velocity.y, glm::clamp(position.y, -1.0f + radius, 1.0f - radius));
-//}
-
-void collision(glm::vec3& position, glm::vec2& velocity, float radius) {
-	const float EPSILON = 0.05f; // Small threshold for stopping
-	const float FRICTION = -0.75f; // Friction factor (adjust as needed)
-
-	// Bottom
-	if (position.y <= (-1.0f + radius)) {
-		position.y = -1.0f + radius;
-		velocity.y *= FRICTION;
-		if (std::abs(velocity.y) < EPSILON)
-			velocity.y = 0.0f;
-	}
-	// Top
-	if (position.y >= (1.0f - radius)) {
-		position.y = 1.0f - radius;
-		velocity.y *= FRICTION;
-		if (std::abs(velocity.y) < EPSILON)
-			velocity.y = 0.0f;
-	}
-	// Right
-	if (position.x >= (1.0f - radius)) {
-		position.x = 1.0f - radius;
-		velocity.x *= FRICTION;
-		if (std::abs(velocity.x) < EPSILON)
-			velocity.x = 0.0f;
-	}
-	// Left
-	if (position.x <= (-1.0f + radius)) {
-		position.x = -1.0f + radius;
-		velocity.x *= FRICTION;
-		if (std::abs(velocity.x) < EPSILON)
-			velocity.x = 0.0f;
-	}
-}
-
 // -----------------------------------------------
 // TASKS
 // -----------------------------------------------
 // TODO Implement collision between balls
 // FIX Prevent sliding on ground
 // TODO Try out the new collision function
+// TODO Setup a line when left mouse click
