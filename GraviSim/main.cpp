@@ -213,3 +213,9 @@ void collision(glm::vec3& position, glm::vec2& velocity, float radius) {
             velocity.x = 0.0f;
     }
 }
+
+// -----------------------------------------------
+// TASKS
+// -----------------------------------------------
+// TODO Implement collision between balls
+// FIX Update the ball position without artefacts
