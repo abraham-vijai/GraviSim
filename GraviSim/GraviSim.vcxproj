@@ -153,6 +153,7 @@
   <ItemGroup>
     <None Include="fragmentShader.frag" />
     <None Include="vertexShader.vert" />
+    <None Include="vertexShaderLine.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h" />

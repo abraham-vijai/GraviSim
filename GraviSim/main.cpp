@@ -29,7 +29,9 @@ const float velocityThreshold = 0.01f; // Define a small threshold
 const float gravity = -9.81f;
 bool isPressed = false;
 glm::vec2 velocity(0.99f, 0.0f);
-glm::vec3 position(0.0f, 1.0f, 0.0f); // Initial position of the circle
+glm::vec3 position(0.5f, 0.5f, 0.0f); // Initial position of the circle
+glm::vec2 startPos(0.0f, 0.0f);
+glm::vec2 endPos(0.0f, 0.0f);
 
 using namespace std;
 
@@ -69,6 +71,7 @@ int main() {
 	// SETUP SHADER
 	// -----------------------------------------------
 	Shader myShader("vertexShader.vert", "fragmentShader.frag");
+	Shader lineShader("vertexShaderLine.vert", "fragmentShader.frag");
 
 	// -----------------------------------------------
 	// CREATE CIRCLE
@@ -91,12 +94,28 @@ int main() {
 	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
 	// -----------------------------------------------
+	// CREATE TEMPORARY LINE
+	// -----------------------------------------------
+	float tempLineVertices[] = { 0.0f,0.0f,0.0f,0.0f };
+	ShapeManager tempLine;
+	int tempLineIndex = tempLine.createShape(tempLineVertices, sizeof(tempLineVertices), GL_DYNAMIC_DRAW);
+	tempLine.addAttribute(tempLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+	// -----------------------------------------------
 	// MAIN LOOP
 	// -----------------------------------------------
 	while (!glfwWindowShouldClose(window)) {
 		// Process Input
 		processInput(window);
 		processMouse(window);
+
+		// Update temporary line vertices
+		tempLineVertices[0] = position.x;
+		tempLineVertices[1] = position.y;
+		tempLineVertices[2] = endPos.x;
+		tempLineVertices[3] = endPos.y;
+		// Update the temporary line buffer
+		tempLine.updateBuffer(tempLineIndex, tempLineVertices, sizeof(tempLineVertices));
 
 		// Specify the color of the background
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -109,7 +128,7 @@ int main() {
 		// Set uniform
 		myShader.use();
 		myShader.setVec3("position", position);
-		updatePhysics();
+		//updatePhysics();
 
 		// -----------------------------------------------
 		// RENDER
@@ -121,6 +140,11 @@ int main() {
 		myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
 		glLineWidth(2.0f);
 		line.renderShape(lineIndex, 2, GL_LINES);
+		// Render Temporary Line
+		lineShader.use();
+		lineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Line colo
+		glLineWidth(2.0f);
+		tempLine.renderShape(tempLineIndex, 8, GL_LINES);
 
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
@@ -132,13 +156,14 @@ int main() {
 	// -----------------------------------------------
 	circle.~ShapeManager();
 	line.~ShapeManager();
+	tempLine.~ShapeManager();
 	glfwTerminate();
 
 	return 0;
 }
 
 void updatePhysics() {
-	float currentTime = glfwGetTime();
+	float currentTime = static_cast<float>(glfwGetTime());
 	float deltaTime = currentTime - lastFrameTime;
 	lastFrameTime = currentTime;
 
@@ -161,7 +186,7 @@ void updatePhysics() {
 
 	// Check for top/bottom collisions
 	if (position.y - radius <= -1.0f) { // Bottom
-		velocity.y *= -damping;  
+		velocity.y *= -damping;
 		position.y = -1.0f + radius;  // Prevent sinking into the ground
 
 		// Apply friction when the ball is touching the ground
@@ -188,31 +213,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void processMouse(GLFWwindow* window) {
-	if (isPressed) { // Only runs when mouse is held down
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-
-		// Convert to OpenGL coordinates
-		float x = (xpos / SCR_WIDTH) * 2.0f - 1.0f;
-		float y = 1.0f - (ypos / SCR_HEIGHT) * 2.0f;
-
-		std::cout << "Mouse held at: (" << x << ", " << y << ")\n";
-	}
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		if (action == GLFW_PRESS) {
-			isPressed = true;
-		}
-		else if (action == GLFW_RELEASE) {
-			isPressed = false;
-			std::cout << "Mouse released\n";
-		}
-	}
-}
-
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments) {
 	// Center position of the circle
 	circleVertices.push_back(0.0f);
@@ -230,8 +230,31 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 	}
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			isPressed = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			isPressed = false;
+		}
+	}
+}
+
+void processMouse(GLFWwindow* window) {
+	if (isPressed) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		// Convert to OpenGL coordinates
+		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
+		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
+	}
+}
+
 // -----------------------------------------------
 // TASKS
 // -----------------------------------------------
 // TODO Implement collision between balls
 // TODO Setup a line when left mouse click
+// FIX Temp line should only display when left mouse is clicked
