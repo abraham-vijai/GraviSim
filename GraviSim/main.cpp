@@ -12,6 +12,8 @@
 // -----------------------------------------------
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void processMouse(GLFWwindow* window);
 void processInput(GLFWwindow* window);
 void updatePhysics();
 
@@ -25,6 +27,7 @@ float lastFrameTime = 0.0f;
 const float damping = 0.8f; // Friction factor (adjust as needed)
 const float velocityThreshold = 0.01f; // Define a small threshold
 const float gravity = -9.81f;
+bool isPressed = false;
 glm::vec2 velocity(0.99f, 0.0f);
 glm::vec3 position(0.0f, 1.0f, 0.0f); // Initial position of the circle
 
@@ -51,7 +54,8 @@ int main() {
 	glfwMakeContextCurrent(window);
 	// Set callback functions
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+
 	// -----------------------------------------------
 	// LOAD GLAD
 	// -----------------------------------------------
@@ -81,9 +85,9 @@ int main() {
 	// -----------------------------------------------
 	// CREATE DIRECTION LINE
 	// -----------------------------------------------
-	float lineVertices[] = { 0.0f, 0.0f, radius, 0.0f };
+	float directionLine[] = { 0.0f, 0.0f, radius, 0.0f };
 	ShapeManager line;
-	int lineIndex = line.createShape(lineVertices, sizeof(lineVertices));
+	int lineIndex = line.createShape(directionLine, sizeof(directionLine));
 	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
 	// -----------------------------------------------
@@ -92,6 +96,7 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		// Process Input
 		processInput(window);
+		processMouse(window);
 
 		// Specify the color of the background
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -181,6 +186,31 @@ void processInput(GLFWwindow* window) {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+void processMouse(GLFWwindow* window) {
+	if (isPressed) { // Only runs when mouse is held down
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		// Convert to OpenGL coordinates
+		float x = (xpos / SCR_WIDTH) * 2.0f - 1.0f;
+		float y = 1.0f - (ypos / SCR_HEIGHT) * 2.0f;
+
+		std::cout << "Mouse held at: (" << x << ", " << y << ")\n";
+	}
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			isPressed = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			isPressed = false;
+			std::cout << "Mouse released\n";
+		}
+	}
 }
 
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments) {
