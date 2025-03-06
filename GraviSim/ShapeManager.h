@@ -37,7 +37,7 @@ public:
      * @param indexCount: Number of indices in the array (default is 0).
      * @return Index of the created shape in the internal shape list.
      */
-    int createShape(const float* vertices, unsigned int vertexCount, const unsigned int* indices = nullptr, unsigned int indexCount = 0) {
+    int createShape(const float* vertices, unsigned int vertexCount, GLenum mode = GL_STATIC_DRAW,const unsigned int* indices = nullptr, unsigned int indexCount = 0) {
         Shape shape{};
 
         // Generate Buffers
@@ -47,13 +47,13 @@ public:
         // Shape setup
         glBindVertexArray(shape.VAO);
         glBindBuffer(GL_ARRAY_BUFFER, shape.VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertexCount, vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertexCount, vertices, mode);
 
         // Generate EBO if needed
         if (indices != nullptr) {
             glGenBuffers(1, &shape.EBO);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.EBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), indices, mode);
             shape.indexCount = indexCount;
         }
 
@@ -113,6 +113,16 @@ public:
             glDrawArrays(mode, 0, shapes[shapeIndex].vertexCount / constant);
         }
         glBindVertexArray(0); // Unbind VAO
+    }
+
+    void updateBuffer(int shapeIndex, const float* newVertices, unsigned int dataSize) {
+        if (shapeIndex < 0 || shapeIndex >= shapes.size()) {
+            std::cerr << "Error: Invalid shape index.\n";
+            return;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, shapes[shapeIndex].VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, newVertices);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     /**
