@@ -13,7 +13,7 @@
 void generateCircleVertices(std::vector<float>& circleVertices, glm::vec3 pos, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void collision(glm::vec3& position, glm::vec2& velocity, float radius);
+void collision(glm::vec3& position, glm::vec2& velocity, glm::vec2 inititalPos, float radius);
 
 // -----------------------------------------------
 // GLOBAL VARIABLES
@@ -67,7 +67,8 @@ int main() {
     const float gravitationalConst = -9.81f;
     glm::vec2 velocity(0.85f, 0.0f);
     std::vector<float> circleVertices;
-    glm::vec3 position(0.0f, 0.0f, 0.0f);
+    glm::vec3 position(-0.5f, 0.0f, 0.0f);
+    glm::vec3 inititalPos = position;
     // Generate the circle circleVertices
     generateCircleVertices(circleVertices, position, radius, segments);
     // Create the circle shape
@@ -79,10 +80,10 @@ int main() {
     // -----------------------------------------------
     // CREATE DIRECTION LINE
     // -----------------------------------------------
-    float lineVertices[] = { 0.0f, 0.0f, radius, 0.0f };
+    float lineVertices[] = { position.x, position.y, radius + position.x, 0.0f };
     ShapeManager line;
-	int lineIndex = line.createShape(lineVertices, sizeof(lineVertices));
-	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    int lineIndex = line.createShape(lineVertices, sizeof(lineVertices));
+    line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
     // Variables for tracking time
     float lastFrame = 0.0f;
@@ -122,22 +123,23 @@ int main() {
         // BORDER COLLISION 
         // -----------------------------------------------
         if (velocity.y != 0.0f || velocity.x != 0.0f) {
-            collision(position, velocity, radius);
+            collision(position, velocity, inititalPos, radius);
         }
         cout << "velocity.x: " << velocity.x << endl;
         cout << "velocity.y: " << velocity.y << endl;
-        
+
 
         // -----------------------------------------------
         // RENDER
         // -----------------------------------------------
         // Render shape
         myShader.setVec3("color", glm::vec3(1.0f, 1.0f, 0.0f));
+
         circle.renderShape(circleIndex, sizeof(float) * 3, GL_TRIANGLE_FAN);
         // Render Line
-		myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
-		glLineWidth(2.0f);
-		line.renderShape(lineIndex, 2, GL_LINES);
+        myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+        glLineWidth(2.0f);
+        line.renderShape(lineIndex, 2, GL_LINES);
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
@@ -172,15 +174,15 @@ void generateCircleVertices(std::vector<float>& circleVertices, glm::vec3 pos, f
     // Generate circle circleVertices
     for (int i = 0; i <= segments; i++) {
         float angle = (2.0f * glm::pi<float>() * i) / segments;
-        float x = radius * cos(angle);
-        float y = radius * sin(angle);
+        float x = pos.x + radius * cos(angle);
+        float y = pos.y + radius * sin(angle);
         circleVertices.push_back(x);
         circleVertices.push_back(y);
         circleVertices.push_back(pos.z);
     }
 }
 
-void collision(glm::vec3& position, glm::vec2& velocity, float radius) {
+void collision(glm::vec3& position, glm::vec2& velocity, glm::vec2 initialPos, float radius) {
     const float EPSILON = 0.05f; // Small threshold for stopping
     const float FRICTION = -0.75f; // Friction factor (adjust as needed)
 
@@ -188,32 +190,37 @@ void collision(glm::vec3& position, glm::vec2& velocity, float radius) {
     if (position.y <= (-1.0f + radius)) {
         position.y = -1.0f + radius;
         velocity.y *= FRICTION;
-        if (std::abs(velocity.y) < EPSILON) 
+        if (std::abs(velocity.y) < EPSILON)
             velocity.y = 0.0f;
     }
     // Top
     if (position.y >= (1.0f - radius)) {
         position.y = 1.0f - radius;
         velocity.y *= FRICTION;
-        if (std::abs(velocity.y) < EPSILON) 
+        if (std::abs(velocity.y) < EPSILON)
             velocity.y = 0.0f;
     }
     // Right
-    if (position.x >= (1.0f - radius)) {
-        position.x = 1.0f - radius;
+    if (position.x >= (1.0f + glm::abs(initialPos.x) - radius)) {
+        position.x = 1.0f + glm::abs(initialPos.x) - radius;
         velocity.x *= FRICTION;
-        if (std::abs(velocity.x) < EPSILON) 
+        if (std::abs(velocity.x) < EPSILON)
             velocity.x = 0.0f;
     }
     // Left
-    if (position.x <= (-1.0f + radius)) {
-        position.x = -1.0f + radius;
+    if (position.x <= (-1.0f + glm::abs(initialPos.x) + radius)) {
+        position.x = -1.0f + glm::abs(initialPos.x) + radius;
         velocity.x *= FRICTION;
-        if (std::abs(velocity.x) < EPSILON) 
+        if (std::abs(velocity.x) < EPSILON)
             velocity.x = 0.0f;
     }
 }
 
+//void drawCircle(std::vector<float>& circleVertices, glm::vec3 pos, float radius, int segments) {
+//    generateCircleVertices(circleVertices, position, radius, segments);
+//    int circleIndex = circle.createShape(circleVertices.data(), circleVertices.size() * sizeof(float));
+//    circle.addAttribute(circleIndex, 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+//}
 // -----------------------------------------------
 // TASKS
 // -----------------------------------------------
