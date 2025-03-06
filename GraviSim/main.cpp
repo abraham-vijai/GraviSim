@@ -22,12 +22,11 @@ void updatePhysics();
 #define SCR_HEIGHT 800
 float radius = 0.15f;
 float lastFrameTime = 0.0f;
-const float epsilon = 0.2f; // Small threshold for stopping
-const float friction = 0.75f; // Friction factor (adjust as needed)
+const float damping = 0.8f; // Friction factor (adjust as needed)
 const float velocityThreshold = 0.01f; // Define a small threshold
-const float gravitationalConst = -9.81f;
-glm::vec2 velocity(0.95f, 0.0f);
-glm::vec3 position(0.0f, 0.0f, 0.0f); // Initial position of the circle
+const float gravity = -9.81f;
+glm::vec2 velocity(0.99f, 0.0f);
+glm::vec3 position(0.0f, 1.0f, 0.0f); // Initial position of the circle
 
 using namespace std;
 
@@ -107,11 +106,6 @@ int main() {
 		myShader.setVec3("position", position);
 		updatePhysics();
 
-		if (velocity.y == 0.0f && velocity.x == 0.0f) {
-			cout << "Ball stopped";
-			glfwWaitEvents();
-		}
-
 		// -----------------------------------------------
 		// RENDER
 		// -----------------------------------------------
@@ -137,32 +131,47 @@ int main() {
 
 	return 0;
 }
+
 void updatePhysics() {
-    float currentTime = glfwGetTime();
-    float deltaTime = currentTime - lastFrameTime;
-    lastFrameTime = currentTime;
+	float currentTime = glfwGetTime();
+	float deltaTime = currentTime - lastFrameTime;
+	lastFrameTime = currentTime;
 
-    // Apply gravity
-    velocity.y += gravitationalConst * deltaTime;
+	// Apply gravity when not hiting the ground
+	if (position.y - radius > -1.0f) {
+		velocity.y += gravity * deltaTime;
+	}
 
-    // Update position
-    position.x += velocity.x * deltaTime;
-    position.y += velocity.y * deltaTime;
+	// Update position
+	position.x += velocity.x * deltaTime;
+	position.y += velocity.y * deltaTime;
 
-    // Check collision with borders
-    if (position.x + radius >= 1.0f || position.x - radius <= -1.0f) {
-        velocity.x *= -friction;  // Reverse X velocity and apply friction
-        position.x = (position.x + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
-		// Stop completely if velocity is too small
+	// Check for left/right wall collisions
+	if (position.x + radius >= 1.0f || position.x - radius <= -1.0f) {
+		velocity.x *= -damping;  // Reverse X velocity with damping
+		position.x = (position.x + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+
 		if (fabs(velocity.x) < velocityThreshold) velocity.x = 0.0f;
-    }
+	}
 
-    if (position.y + radius >= 1.0f || position.y - radius <= -1.0f) {
-        velocity.y *= -friction;  // Reverse Y velocity and apply friction
-        position.y = (position.y + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+	// Check for top/bottom collisions
+	if (position.y - radius <= -1.0f) { // Bottom
+		velocity.y *= -damping;  
+		position.y = -1.0f + radius;  // Prevent sinking into the ground
+
+		// Apply friction when the ball is touching the ground
+		velocity.x *= damping;
+
+		// Stop bouncing and sliding if velocity is very low
 		if (fabs(velocity.y) < velocityThreshold) velocity.y = 0.0f;
+		if (fabs(velocity.x) < velocityThreshold) velocity.x = 0.0f;
+	}
+	else if (position.y + radius >= 1.0f) { // Top
+		velocity.y *= -damping;  // Reverse Y velocity
+		position.y = 1.0f - radius;
 
-    }
+		if (fabs(velocity.y) < velocityThreshold) velocity.y = 0.0f;
+	}
 }
 
 void processInput(GLFWwindow* window) {
@@ -195,7 +204,4 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 // TASKS
 // -----------------------------------------------
 // TODO Implement collision between balls
-// FIX Prevent sliding on ground
-// TODO Try out the new collision function
 // TODO Setup a line when left mouse click
-// FIX Add epsilon to stop the ball
