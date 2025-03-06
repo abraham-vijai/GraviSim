@@ -24,6 +24,7 @@ float radius = 0.15f;
 float lastFrameTime = 0.0f;
 const float epsilon = 0.2f; // Small threshold for stopping
 const float friction = 0.75f; // Friction factor (adjust as needed)
+const float velocityThreshold = 0.01f; // Define a small threshold
 const float gravitationalConst = -9.81f;
 glm::vec2 velocity(0.95f, 0.0f);
 glm::vec3 position(0.0f, 0.0f, 0.0f); // Initial position of the circle
@@ -152,11 +153,15 @@ void updatePhysics() {
     if (position.x + radius >= 1.0f || position.x - radius <= -1.0f) {
         velocity.x *= -friction;  // Reverse X velocity and apply friction
         position.x = (position.x + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+		// Stop completely if velocity is too small
+		if (fabs(velocity.x) < velocityThreshold) velocity.x = 0.0f;
     }
 
     if (position.y + radius >= 1.0f || position.y - radius <= -1.0f) {
         velocity.y *= -friction;  // Reverse Y velocity and apply friction
         position.y = (position.y + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
+		if (fabs(velocity.y) < velocityThreshold) velocity.y = 0.0f;
+
     }
 }
 
@@ -193,3 +198,4 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 // FIX Prevent sliding on ground
 // TODO Try out the new collision function
 // TODO Setup a line when left mouse click
+// FIX Add epsilon to stop the ball
