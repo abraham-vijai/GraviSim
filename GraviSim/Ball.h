@@ -29,7 +29,7 @@ public:
         handleCollisions();
     }
 
-    void generateBallVertices(std::vector<float>& circleVertices, int segments) {
+    void generateBallVertices(std::vector<float>& circleVertices) {
         // Center position of the circle
         circleVertices.push_back(0.0f);
         circleVertices.push_back(0.0f);
