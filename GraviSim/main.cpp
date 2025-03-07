@@ -13,7 +13,7 @@
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void processMouse(GLFWwindow* window, Shader& lineShader, ShapeManager& tempLine, int tempLineindex);
+void processMouse(GLFWwindow* window, Shader& pullLineShader, ShapeManager& pullLine, int pullLineindex);
 void processKeyBoard(GLFWwindow* window);
 void updatePhysics();
 
@@ -71,7 +71,7 @@ int main() {
 	// SETUP SHADER
 	// -----------------------------------------------
 	Shader myShader("vertexShader.vert", "fragmentShader.frag");
-	Shader lineShader("vertexShaderLine.vert", "fragmentShader.frag");
+	Shader pullLineShader("vertexShaderLine.vert", "fragmentShader.frag");
 
 	// -----------------------------------------------
 	// CREATE CIRCLE
@@ -88,18 +88,18 @@ int main() {
 	// -----------------------------------------------
 	// CREATE DIRECTION LINE
 	// -----------------------------------------------
-	float directionLine[] = { 0.0f, 0.0f, radius, 0.0f };
-	ShapeManager line;
-	int lineIndex = line.createShape(directionLine, sizeof(directionLine));
-	line.addAttribute(lineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	float directionLineVertices[] = { 0.0f, 0.0f, radius, 0.0f };
+	ShapeManager directionLine;
+	int directionLineIndex = directionLine.createShape(directionLineVertices, sizeof(directionLineVertices));
+	directionLine.addAttribute(directionLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
 	// -----------------------------------------------
-	// CREATE TEMPORARY LINE
+	// CREATE PULL LINE
 	// -----------------------------------------------
-	float tempLineVertices[] = { 0.0f,0.0f,0.0f,0.0f };
-	ShapeManager tempLine;
-	int tempLineIndex = tempLine.createShape(tempLineVertices, sizeof(tempLineVertices), GL_DYNAMIC_DRAW);
-	tempLine.addAttribute(tempLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	float pullLineVertices[] = { 0.0f,0.0f,0.0f,0.0f };
+	ShapeManager pullLine;
+	int pullLineIndex = pullLine.createShape(pullLineVertices, sizeof(pullLineVertices), GL_DYNAMIC_DRAW);
+	pullLine.addAttribute(pullLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
 	// -----------------------------------------------
 	// MAIN LOOP
@@ -110,15 +110,15 @@ int main() {
 
 
 		// -----------------------------------------------
-		// UPDATE TEMPORARY LINE
+		// UPDATE PULL LINE
 		// -----------------------------------------------
-		// Update temporary line vertices
-		tempLineVertices[0] = position.x;
-		tempLineVertices[1] = position.y;
-		tempLineVertices[2] = endPos.x;
-		tempLineVertices[3] = endPos.y;
-		// Update the temporary line buffer
-		tempLine.updateBuffer(tempLineIndex, tempLineVertices, sizeof(tempLineVertices));
+		// Update pull line vertices
+		pullLineVertices[0] = position.x;
+		pullLineVertices[1] = position.y;
+		pullLineVertices[2] = endPos.x;
+		pullLineVertices[3] = endPos.y;
+		// Update the pull line buffer
+		pullLine.updateBuffer(pullLineIndex, pullLineVertices, sizeof(pullLineVertices));
 
 		// Specify the color of the background
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -142,12 +142,11 @@ int main() {
 		// Render Line
 		myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
 		glLineWidth(2.0f);
-		line.renderShape(lineIndex, 2, GL_LINES);
+		directionLine.renderShape(directionLineIndex, 2, GL_LINES);
 
 		// Process Mouse Input
-		processMouse(window, lineShader, tempLine, tempLineIndex);
+		processMouse(window, pullLineShader, pullLine, pullLineIndex);
 		
-
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -157,8 +156,8 @@ int main() {
 	// CLEANUP
 	// -----------------------------------------------
 	circle.~ShapeManager();
-	line.~ShapeManager();
-	tempLine.~ShapeManager();
+	directionLine.~ShapeManager();
+	pullLine.~ShapeManager();
 	glfwTerminate();
 
 	return 0;
@@ -211,7 +210,7 @@ void processKeyBoard(GLFWwindow* window) {
 		glfwSetWindowShouldClose(window, true);
 }
 
-void processMouse(GLFWwindow* window, Shader& lineShader, ShapeManager& tempLine, int tempLineindex) {
+void processMouse(GLFWwindow* window, Shader& pullLineShader, ShapeManager& pullLine, int pullLineindex) {
 	if (isPressed) {
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
@@ -220,11 +219,11 @@ void processMouse(GLFWwindow* window, Shader& lineShader, ShapeManager& tempLine
 		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
 		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
 
-		// Render Temporary Line
-		lineShader.use();
-		lineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Line colo
+		// Render pull Line
+		pullLineShader.use();
+		pullLineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); 
 		glLineWidth(2.0f);
-		tempLine.renderShape(tempLineindex, 8, GL_LINES);
+		pullLine.renderShape(pullLineindex, 8, GL_LINES);
 	}
 }
 
@@ -264,5 +263,4 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 // TASKS
 // -----------------------------------------------
 // TODO Implement collision between balls
-// TODO Setup a line when left mouse click
 // FIX Reduce global variables
