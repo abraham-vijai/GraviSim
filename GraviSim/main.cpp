@@ -1,9 +1,6 @@
-﻿#include <iostream>
-#include <glad/glad.h>
+﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/constants.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <vector>
 
 #include "ShapeManager.h"
 #include "Shader.h"
@@ -12,12 +9,10 @@
 // -----------------------------------------------
 // FUNCTION DEFINITIONS
 // -----------------------------------------------
-void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void processMouse(GLFWwindow* window, Shader& pullLineShader, ShapeManager& pullLine, int pullLineindex);
 void processKeyBoard(GLFWwindow* window);
-void updatePhysics();
 
 // -----------------------------------------------
 // GLOBAL VARIABLES
@@ -72,15 +67,14 @@ int main() {
 	// -----------------------------------------------
 	// BALL OBJECT
 	// -----------------------------------------------
-	Ball ball(glm::vec3(-0.5f, 1.0f, 0.0f), glm::vec2(0.95f, 0.0f), 0.15f);
+	Ball ball(glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec2(0.95f, 0.0f), 0.15f, 25);
 
 	// -----------------------------------------------
 	// CREATE CIRCLE
 	// -----------------------------------------------	
-	int segments = 25;
 	std::vector<float> circleVertices;
 	// Generate the circle circleVertices
-	generateCircleVertices(circleVertices, ball.radius, segments);
+	ball.generateBallVertices(circleVertices);
 	// Create the circle shape
 	ShapeManager circle;
 	int circleIndex = circle.createShape(circleVertices.data(), circleVertices.size() * sizeof(float));
@@ -101,7 +95,6 @@ int main() {
 	ShapeManager pullLine;
 	int pullLineIndex = pullLine.createShape(pullLineVertices, sizeof(pullLineVertices), GL_DYNAMIC_DRAW);
 	pullLine.addAttribute(pullLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-
 
 	// -----------------------------------------------
 	// MAIN LOOP
@@ -151,7 +144,7 @@ int main() {
 
 		// Process Mouse Input
 		processMouse(window, pullLineShader, pullLine, pullLineIndex);
-		
+				
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -175,18 +168,20 @@ void processKeyBoard(GLFWwindow* window) {
 
 void processMouse(GLFWwindow* window, Shader& pullLineShader, ShapeManager& pullLine, int pullLineindex) {
 	if (isPressed) {
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
 
-		// Convert to OpenGL coordinates
-		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
-		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
 
-		// Render pull Line
-		pullLineShader.use();
-		pullLineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); 
-		glLineWidth(2.0f);
-		pullLine.renderShape(pullLineindex, 8, GL_LINES);
+	// Convert to OpenGL coordinates
+	endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
+	endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
+
+	// Render pull Line
+	pullLineShader.use();
+	pullLineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); 
+	glLineWidth(2.0f);
+	pullLine.renderShape(pullLineindex, 8, GL_LINES);
+
 	}
 }
 
@@ -202,23 +197,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		else if (action == GLFW_RELEASE) {
 			isPressed = false;
 		}
-	}
-}
-
-void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments) {
-	// Center position of the circle
-	circleVertices.push_back(0.0f);
-	circleVertices.push_back(0.0f);
-	circleVertices.push_back(0.0f);
-
-	// Generate circle circleVertices
-	for (int i = 0; i <= segments; i++) {
-		float angle = (2.0f * glm::pi<float>() * i) / segments;
-		float x = radius * cos(angle);
-		float y = radius * sin(angle);
-		circleVertices.push_back(x);
-		circleVertices.push_back(y);
-		circleVertices.push_back(0.0f);
 	}
 }
 

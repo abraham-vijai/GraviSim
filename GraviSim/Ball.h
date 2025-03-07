@@ -11,10 +11,10 @@ public:
     float gravity = -9.81f;
     float damping = 0.8f;
     float velocityThreshold = 0.01f;
+    int segments;
 
-
-    Ball(glm::vec3 pos, glm::vec2 vel, float r)
-        : position(pos), velocity(vel), radius(r) {
+    Ball(glm::vec3 pos, glm::vec2 vel, float r, int res)
+        : position(pos), velocity(vel), radius(r), segments(res) {
     }
 
     void updatePhysics(float deltaTime) {
@@ -27,6 +27,23 @@ public:
 
         // Handle collisions
         handleCollisions();
+    }
+
+    void generateBallVertices(std::vector<float>& circleVertices, int segments) {
+        // Center position of the circle
+        circleVertices.push_back(0.0f);
+        circleVertices.push_back(0.0f);
+        circleVertices.push_back(0.0f);
+
+        // Generate circle circleVertices
+        for (int i = 0; i <= segments; i++) {
+            float angle = (2.0f * glm::pi<float>() * i) / segments;
+            float x = radius * cos(angle);
+            float y = radius * sin(angle);
+            circleVertices.push_back(x);
+            circleVertices.push_back(y);
+            circleVertices.push_back(0.0f);
+        }
     }
 
 private:
