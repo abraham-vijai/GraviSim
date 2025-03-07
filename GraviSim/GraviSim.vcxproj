@@ -156,6 +156,7 @@
     <None Include="vertexShaderLine.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ball.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShapeManager.h" />
   </ItemGroup>

@@ -4,8 +4,10 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+
 #include "ShapeManager.h"
 #include "Shader.h"
+#include "Ball.h"
 
 // -----------------------------------------------
 // FUNCTION DEFINITIONS
@@ -22,14 +24,8 @@ void updatePhysics();
 // -----------------------------------------------
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 800
-float radius = 0.15f;
 float lastFrameTime = 0.0f;
-const float damping = 0.8f; // Friction factor (adjust as needed)
-const float velocityThreshold = 0.01f; // Define a small threshold
-const float gravity = -9.81f;
 bool isPressed = false;
-glm::vec2 velocity(0.99f, 0.0f);
-glm::vec3 position(0.5f, 0.5f, 0.0f); // Initial position of the circle
 glm::vec2 startPos(0.0f, 0.0f);
 glm::vec2 endPos(0.0f, 0.0f);
 
@@ -74,12 +70,17 @@ int main() {
 	Shader pullLineShader("vertexShaderLine.vert", "fragmentShader.frag");
 
 	// -----------------------------------------------
+	// BALL OBJECT
+	// -----------------------------------------------
+	Ball ball(glm::vec3(-0.5f, 1.0f, 0.0f), glm::vec2(0.95f, 0.0f), 0.15f);
+
+	// -----------------------------------------------
 	// CREATE CIRCLE
 	// -----------------------------------------------	
 	int segments = 25;
 	std::vector<float> circleVertices;
 	// Generate the circle circleVertices
-	generateCircleVertices(circleVertices, radius, segments);
+	generateCircleVertices(circleVertices, ball.radius, segments);
 	// Create the circle shape
 	ShapeManager circle;
 	int circleIndex = circle.createShape(circleVertices.data(), circleVertices.size() * sizeof(float));
@@ -88,7 +89,7 @@ int main() {
 	// -----------------------------------------------
 	// CREATE DIRECTION LINE
 	// -----------------------------------------------
-	float directionLineVertices[] = { 0.0f, 0.0f, radius, 0.0f };
+	float directionLineVertices[] = { 0.0f, 0.0f, ball.radius, 0.0f };
 	ShapeManager directionLine;
 	int directionLineIndex = directionLine.createShape(directionLineVertices, sizeof(directionLineVertices));
 	directionLine.addAttribute(directionLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
@@ -101,6 +102,7 @@ int main() {
 	int pullLineIndex = pullLine.createShape(pullLineVertices, sizeof(pullLineVertices), GL_DYNAMIC_DRAW);
 	pullLine.addAttribute(pullLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
+
 	// -----------------------------------------------
 	// MAIN LOOP
 	// -----------------------------------------------
@@ -108,13 +110,16 @@ int main() {
 		// Process keyboard Input
 		processKeyBoard(window);
 
+		float currentTime = static_cast<float>(glfwGetTime());
+		float deltaTime = currentTime - lastFrameTime;
+		lastFrameTime = currentTime;
 
 		// -----------------------------------------------
 		// UPDATE PULL LINE
 		// -----------------------------------------------
 		// Update pull line vertices
-		pullLineVertices[0] = position.x;
-		pullLineVertices[1] = position.y;
+		pullLineVertices[0] = ball.position.x;
+		pullLineVertices[1] = ball.position.y;
 		pullLineVertices[2] = endPos.x;
 		pullLineVertices[3] = endPos.y;
 		// Update the pull line buffer
@@ -130,8 +135,8 @@ int main() {
 		// -----------------------------------------------
 		// Set uniform
 		myShader.use();
-		myShader.setVec3("position", position);
-		updatePhysics();
+		myShader.setVec3("position", ball.position);
+		ball.updatePhysics(deltaTime);
 
 		// -----------------------------------------------
 		// RENDER
@@ -161,48 +166,6 @@ int main() {
 	glfwTerminate();
 
 	return 0;
-}
-
-void updatePhysics() {
-	float currentTime = static_cast<float>(glfwGetTime());
-	float deltaTime = currentTime - lastFrameTime;
-	lastFrameTime = currentTime;
-
-	// Apply gravity when not hiting the ground
-	if (position.y - radius > -1.0f) {
-		velocity.y += gravity * deltaTime;
-	}
-
-	// Update position
-	position.x += velocity.x * deltaTime;
-	position.y += velocity.y * deltaTime;
-
-	// Check for left/right wall collisions
-	if (position.x + radius >= 1.0f || position.x - radius <= -1.0f) {
-		velocity.x *= -damping;  // Reverse X velocity with damping
-		position.x = (position.x + radius >= 1.0f) ? 1.0f - radius : -1.0f + radius;
-
-		if (fabs(velocity.x) < velocityThreshold) velocity.x = 0.0f;
-	}
-
-	// Check for top/bottom collisions
-	if (position.y - radius <= -1.0f) { // Bottom
-		velocity.y *= -damping;
-		position.y = -1.0f + radius;  // Prevent sinking into the ground
-
-		// Apply friction when the ball is touching the ground
-		velocity.x *= damping;
-
-		// Stop bouncing and sliding if velocity is very low
-		if (fabs(velocity.y) < velocityThreshold) velocity.y = 0.0f;
-		if (fabs(velocity.x) < velocityThreshold) velocity.x = 0.0f;
-	}
-	else if (position.y + radius >= 1.0f) { // Top
-		velocity.y *= -damping;  // Reverse Y velocity
-		position.y = 1.0f - radius;
-
-		if (fabs(velocity.y) < velocityThreshold) velocity.y = 0.0f;
-	}
 }
 
 void processKeyBoard(GLFWwindow* window) {
