@@ -204,9 +204,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			isPressed = false;
 
 			// Calculate the direction of the pull line
+			float pullLineLength = glm::distance(startPos, endPos);
 			glm::vec2 vectorComponents = endPos - startPos;
 			float magnitude = glm::length(vectorComponents);
 			glm::vec2 pullLineDirection = glm::vec2(vectorComponents.x / magnitude, vectorComponents.y / magnitude);
+			pullLineDirection *= pullLineLength;
 
 			// Update the ball velocity
 			ball.velocity = -pullLineDirection;
