@@ -1,6 +1,5 @@
 ﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/gtc/constants.hpp>
 
 #include "ShapeManager.h"
 #include "Shader.h"

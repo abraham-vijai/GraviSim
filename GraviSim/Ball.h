@@ -8,13 +8,13 @@
  */
 class Ball {
 public:
-    glm::vec3 position; ///< Position of the ball in 3D space.
-    glm::vec2 velocity; ///< Velocity of the ball in 2D (x, y) plane.
-    float radius; ///< Radius of the ball.
-    float gravity = -9.81f; ///< Gravity affecting the ball's motion.
-    float damping = 0.8f; ///< Damping factor applied during collisions.
-    float velocityThreshold = 0.01f; ///< Minimum velocity below which movement stops.
-    int segments; ///< Number of segments used to approximate the circle.
+    glm::vec3 position; // Position of the ball in 3D space.
+    glm::vec2 velocity; // Velocity of the ball in 2D (x, y) plane.
+    float radius; // Radius of the ball.
+    float gravity = -9.81f; // Gravity affecting the ball's motion.
+    float damping = 0.8f; // Damping factor applied during collisions.
+    float velocityThreshold = 0.01f; // Minimum velocity below which movement stops.
+    int segments; // Number of segments used to approximate the circle.
 
     /**
      * @brief Constructs a Ball object with initial position, velocity, radius, and resolution.
