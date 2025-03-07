@@ -32,6 +32,9 @@
     <None Include="fragmentShader.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="vertexShaderLine.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ShapeManager.h">
