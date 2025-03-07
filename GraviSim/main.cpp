@@ -13,8 +13,8 @@
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void processMouse(GLFWwindow* window);
-void processInput(GLFWwindow* window);
+void processMouse(GLFWwindow* window, Shader& lineShader, ShapeManager& tempLine, int tempLineindex);
+void processKeyBoard(GLFWwindow* window);
 void updatePhysics();
 
 // -----------------------------------------------
@@ -105,10 +105,13 @@ int main() {
 	// MAIN LOOP
 	// -----------------------------------------------
 	while (!glfwWindowShouldClose(window)) {
-		// Process Input
-		processInput(window);
-		processMouse(window);
+		// Process keyboard Input
+		processKeyBoard(window);
 
+
+		// -----------------------------------------------
+		// UPDATE TEMPORARY LINE
+		// -----------------------------------------------
 		// Update temporary line vertices
 		tempLineVertices[0] = position.x;
 		tempLineVertices[1] = position.y;
@@ -128,7 +131,7 @@ int main() {
 		// Set uniform
 		myShader.use();
 		myShader.setVec3("position", position);
-		//updatePhysics();
+		updatePhysics();
 
 		// -----------------------------------------------
 		// RENDER
@@ -140,11 +143,10 @@ int main() {
 		myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
 		glLineWidth(2.0f);
 		line.renderShape(lineIndex, 2, GL_LINES);
-		// Render Temporary Line
-		lineShader.use();
-		lineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Line colo
-		glLineWidth(2.0f);
-		tempLine.renderShape(tempLineIndex, 8, GL_LINES);
+
+		// Process Mouse Input
+		processMouse(window, lineShader, tempLine, tempLineIndex);
+		
 
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
@@ -204,13 +206,41 @@ void updatePhysics() {
 	}
 }
 
-void processInput(GLFWwindow* window) {
+void processKeyBoard(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
+void processMouse(GLFWwindow* window, Shader& lineShader, ShapeManager& tempLine, int tempLineindex) {
+	if (isPressed) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		// Convert to OpenGL coordinates
+		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
+		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
+
+		// Render Temporary Line
+		lineShader.use();
+		lineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Line colo
+		glLineWidth(2.0f);
+		tempLine.renderShape(tempLineindex, 8, GL_LINES);
+	}
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			isPressed = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			isPressed = false;
+		}
+	}
 }
 
 void generateCircleVertices(std::vector<float>& circleVertices, float radius, int segments) {
@@ -230,31 +260,9 @@ void generateCircleVertices(std::vector<float>& circleVertices, float radius, in
 	}
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		if (action == GLFW_PRESS) {
-			isPressed = true;
-		}
-		else if (action == GLFW_RELEASE) {
-			isPressed = false;
-		}
-	}
-}
-
-void processMouse(GLFWwindow* window) {
-	if (isPressed) {
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-
-		// Convert to OpenGL coordinates
-		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
-		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
-	}
-}
-
 // -----------------------------------------------
 // TASKS
 // -----------------------------------------------
 // TODO Implement collision between balls
 // TODO Setup a line when left mouse click
-// FIX Temp line should only display when left mouse is clicked
+// FIX Reduce global variables
