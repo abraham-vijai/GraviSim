@@ -58,19 +58,6 @@ int main() {
 		return -1;
 	}
 
-	//srand(static_cast<unsigned int>(time(0)));
-	//// -----------------------------------------------
-	//// CREATE RANDOM VALUES 
-	//// -----------------------------------------------
-	//float randRadius = static_cast<float>(rand() % 100) / 100.0f;
-	//float randX = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
-	//float randY = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
-	//float randVelX = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
-	//float randVelY = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
-	//float randColorR = static_cast<float>(rand() % 100) / 100.0f;
-	//float randColorG = static_cast<float>(rand() % 100) / 100.0f;
-	//float randColorB = static_cast<float>(rand() % 100) / 100.0f;
-
 	// -----------------------------------------------
 	// SETUP SHADER
 	// -----------------------------------------------
