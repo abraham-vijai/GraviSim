@@ -35,8 +35,8 @@ public:
      */
     void updatePhysics(float deltaTime) {
         // Apply gravity if above ground
-        if (position.y - radius > -1.0f)
-            velocity.y += gravity * deltaTime;
+        //if (position.y - radius > -1.0f)
+        //    velocity.y += gravity * deltaTime;
 
         // Update position
         position += glm::vec3(velocity * deltaTime, 0.0f);
