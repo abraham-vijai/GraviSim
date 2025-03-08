@@ -22,6 +22,7 @@ float lastFrameTime = 0.0f;
 bool isPressed = false;
 glm::vec2 startPos(0.0f, 0.0f);
 glm::vec2 endPos(0.0f, 0.0f);
+Ball ball(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f), 0.15f, 25);
 
 using namespace std;
 
@@ -57,16 +58,24 @@ int main() {
 		return -1;
 	}
 
+	//srand(static_cast<unsigned int>(time(0)));
+	//// -----------------------------------------------
+	//// CREATE RANDOM VALUES 
+	//// -----------------------------------------------
+	//float randRadius = static_cast<float>(rand() % 100) / 100.0f;
+	//float randX = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
+	//float randY = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
+	//float randVelX = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
+	//float randVelY = static_cast<float>(rand() % 200) / 100.0f - 1.0f;
+	//float randColorR = static_cast<float>(rand() % 100) / 100.0f;
+	//float randColorG = static_cast<float>(rand() % 100) / 100.0f;
+	//float randColorB = static_cast<float>(rand() % 100) / 100.0f;
+
 	// -----------------------------------------------
 	// SETUP SHADER
 	// -----------------------------------------------
 	Shader myShader("vertexShader.vert", "fragmentShader.frag");
 	Shader pullLineShader("vertexShaderLine.vert", "fragmentShader.frag");
-
-	// -----------------------------------------------
-	// BALL OBJECT
-	// -----------------------------------------------
-	Ball ball(glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec2(1.25f, 0.0f), 0.15f, 25);
 
 	// -----------------------------------------------
 	// CREATE CIRCLE
@@ -143,7 +152,7 @@ int main() {
 
 		// Process Mouse Input
 		processMouse(window, pullLineShader, pullLine, pullLineIndex);
-				
+
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -167,20 +176,18 @@ void processKeyBoard(GLFWwindow* window) {
 
 void processMouse(GLFWwindow* window, Shader& pullLineShader, ShapeManager& pullLine, int pullLineindex) {
 	if (isPressed) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
 
-	double xpos, ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
+		// Convert to OpenGL coordinates
+		endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
+		endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
 
-	// Convert to OpenGL coordinates
-	endPos.x = (static_cast<float>(xpos) / SCR_WIDTH) * 2.0f - 1.0f;
-	endPos.y = 1.0f - (static_cast<float>(ypos) / SCR_HEIGHT) * 2.0f;
-
-	// Render pull Line
-	pullLineShader.use();
-	pullLineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); 
-	glLineWidth(2.0f);
-	pullLine.renderShape(pullLineindex, 8, GL_LINES);
-
+		// Render pull Line
+		pullLineShader.use();
+		pullLineShader.setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f));
+		glLineWidth(2.0f);
+		pullLine.renderShape(pullLineindex, 8, GL_LINES);
 	}
 }
 
@@ -195,6 +202,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		}
 		else if (action == GLFW_RELEASE) {
 			isPressed = false;
+
+			// Calculate the direction of the pull line
+			float pullLineLength = glm::distance(startPos, endPos);
+			glm::vec2 vectorComponents = endPos - startPos;
+			float magnitude = glm::length(vectorComponents);
+			glm::vec2 pullLineDirection = glm::vec2(vectorComponents.x / magnitude, vectorComponents.y / magnitude);
+			pullLineDirection *= pullLineLength;
+
+			// Update the ball velocity
+			ball.velocity = -pullLineDirection;
 		}
 	}
 }
@@ -204,3 +221,5 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 // -----------------------------------------------
 // TODO Implement collision between balls
 // FIX Reduce global variables
+// TODO Add multiple balls with different colors
+// TODO The pull line should be associated with only one ball
