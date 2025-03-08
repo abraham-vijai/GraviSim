@@ -21,10 +21,8 @@ void convertToOpenGLCoordinates(double xpos, double ypos, float& mouseX, float& 
 // -----------------------------------------------
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 800
-const float distThreshold = 0.1f;
 float lastFrameTime = 0.0f;
 bool isPressed = false;
-glm::vec2 startPos(0.0f, 0.0f);
 glm::vec2 endPos(0.0f, 0.0f);
 std::vector<Ball> ballList;
 Ball* selectedBall = nullptr;
@@ -111,10 +109,8 @@ int main() {
 	int directionLineIndex = directionLine.createShape(directionLineVertices, sizeof(directionLineVertices));
 	directionLine.addAttribute(directionLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
-
 	std::vector<float> circleVertices;
 	ShapeManager circle;
-
 
 	// -----------------------------------------------
 	// MAIN LOOP
@@ -235,6 +231,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 	double xpos, ypos;
 	float mouseX, mouseY;
+	glm::vec2 startPos(0.0f, 0.0f);
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		glfwGetCursorPos(window, &xpos, &ypos);
@@ -295,4 +292,4 @@ float getRandomFloat(float min, float max) {
 // -----------------------------------------------
 // TODO Implement collision between balls
 // FIX Reduce global variables
-// FIX Ball is now a global variable
+// FIX Avoid creating the circle shape every loop
