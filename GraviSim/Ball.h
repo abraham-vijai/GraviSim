@@ -36,6 +36,7 @@ public:
      */
     void updatePhysics(float deltaTime) {
         // Apply gravity if above ground
+      
        /* if (position.y - radius > -1.0f)
             velocity.y += gravity * deltaTime;*/
 
