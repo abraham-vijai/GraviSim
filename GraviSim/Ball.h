@@ -10,6 +10,7 @@ class Ball {
 public:
     glm::vec3 position; // Position of the ball in 3D space.
     glm::vec2 velocity; // Velocity of the ball in 2D (x, y) plane.
+	glm::vec3 color; // Color of the ball.
     float radius; // Radius of the ball.
     float gravity = -9.81f; // Gravity affecting the ball's motion.
     float damping = 0.8f; // Damping factor applied during collisions.
@@ -24,8 +25,8 @@ public:
      * @param r Radius of the ball.
      * @param res Number of segments for circle approximation.
      */
-    Ball(glm::vec3 pos, glm::vec2 vel, float r, int res)
-        : position(pos), velocity(vel), radius(r), segments(res) {
+    Ball(glm::vec3 pos, glm::vec2 vel,glm::vec3 col, float r, int res)
+        : position(pos), velocity(vel), radius(r), segments(res), color(col) {
     }
 
     /**
@@ -35,8 +36,9 @@ public:
      */
     void updatePhysics(float deltaTime) {
         // Apply gravity if above ground
-        //if (position.y - radius > -1.0f)
-        //    velocity.y += gravity * deltaTime;
+      
+       /* if (position.y - radius > -1.0f)
+            velocity.y += gravity * deltaTime;*/
 
         // Update position
         position += glm::vec3(velocity * deltaTime, 0.0f);
