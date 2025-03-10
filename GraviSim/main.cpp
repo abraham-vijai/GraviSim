@@ -32,10 +32,10 @@ std::mt19937 gen(rd());
 
 using namespace std;
 
-// -----------------------------------------------
-    // SETUP GLFW
-// -----------------------------------------------
 int main() {
+    // -----------------------------------------------
+    // SETUP GLFW
+    // -----------------------------------------------
     // Initialize GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -134,6 +134,9 @@ int main() {
         for (size_t i = 0; i < ballList.size(); i++) {
             Ball& newBall = ballList[i];
 
+            // -----------------------------------------------
+            // UPDATE LINES
+            // -----------------------------------------------
             // Update pull line vertices if a ball is selected
             if (selectedBall != nullptr && selectedBall == &newBall) {
                 pullLineVertices[0] = selectedBall->position.x;
@@ -142,7 +145,6 @@ int main() {
                 pullLineVertices[3] = endPos.y;
                 pullLine.updateBuffer(pullLineIndex, pullLineVertices, sizeof(pullLineVertices));
             }
-
             // Update direction line vertices
             directionLineVertices[0] = 0.0f;
             directionLineVertices[1] = 0.0f;
