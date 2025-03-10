@@ -64,7 +64,7 @@ int main() {
     }
 
     // Create multiple balls
-    for (size_t i = 0; i < 5; i++) {
+    for (size_t i = 0; i < 2; i++) {
         float randRadius = getRandomFloat(0.1f, 0.3f);
         float randX = getRandomFloat(-1.0f + randRadius, 1.0f - randRadius);
         float randY = getRandomFloat(-1.0f + randRadius, 1.0f - randRadius);
@@ -74,7 +74,7 @@ int main() {
         float randColorG = getRandomFloat(0.0f, 1.0f);
         float randColorB = getRandomFloat(0.0f, 1.0f);
 
-        Ball ball(glm::vec3(randX, randY, 0.0f), glm::vec2(randVelX, randVelY), glm::vec3(randColorR, randColorG, randColorB), randRadius, 25);
+        Ball ball(i, glm::vec3(randX, randY, 0.0f), glm::vec2(randVelX, randVelY), glm::vec3(randColorR, randColorG, randColorB), randRadius, 25);
         ballList.emplace_back(ball);
     }
 
@@ -100,7 +100,6 @@ int main() {
     int directionLineIndex = directionLine.createShape(directionLineVertices, sizeof(directionLineVertices));
     directionLine.addAttribute(directionLineIndex, 0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
-
     // -----------------------------------------------
     // CREATE CIRCLE
     // -----------------------------------------------
@@ -113,7 +112,6 @@ int main() {
         circle.addAttribute(circleIndex, 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         circleIndices.push_back(circleIndex);
     }
-
 
     // -----------------------------------------------
     // MAIN LOOP
@@ -132,13 +130,13 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         for (size_t i = 0; i < ballList.size(); i++) {
-            Ball& newBall = ballList[i];
+            Ball& currentBall = ballList[i];
 
             // -----------------------------------------------
             // UPDATE LINES
             // -----------------------------------------------
             // Update pull line vertices if a ball is selected
-            if (selectedBall != nullptr && selectedBall == &newBall) {
+            if (selectedBall != nullptr && selectedBall == &currentBall) {
                 pullLineVertices[0] = selectedBall->position.x;
                 pullLineVertices[1] = selectedBall->position.y;
                 pullLineVertices[2] = endPos.x;
@@ -148,20 +146,35 @@ int main() {
             // Update direction line vertices
             directionLineVertices[0] = 0.0f;
             directionLineVertices[1] = 0.0f;
-            directionLineVertices[2] = newBall.radius;
+            directionLineVertices[2] = currentBall.radius;
             directionLineVertices[3] = 0.0f;
             directionLine.updateBuffer(directionLineIndex, directionLineVertices, sizeof(directionLineVertices));
 
             // Move the ball
             myShader.use();
-            myShader.setVec3("position", newBall.position);
-            newBall.updatePhysics(deltaTime);
+            myShader.setVec3("position", currentBall.position);
+            currentBall.updatePhysics(deltaTime);
+
+            // -----------------------------------------------
+            // BALL TO BALL COLLISION
+            // -----------------------------------------------
+            for (auto& targetBall : ballList) {
+                // Invalidate self collision
+                if (currentBall.id != targetBall.id) {
+                    float centerDistance = glm::distance(glm::vec2(currentBall.position.x, currentBall.position.y), glm::vec2(targetBall.position.x, targetBall.position.y));
+                    float radiiSum = currentBall.radius + targetBall.radius;
+                    // Check the distance between centers of two balls
+                    if (centerDistance <= radiiSum) {
+                        cout << "Balls are colliding";
+                    }
+                }
+            }
 
             // -----------------------------------------------
             // RENDER
             // -----------------------------------------------
             // Render the ball
-            myShader.setVec3("color", newBall.color);
+            myShader.setVec3("color", currentBall.color);
             circle.renderShape(circleIndices[i], sizeof(float) * 3, GL_TRIANGLE_FAN);
             // Render the direction line
             myShader.setVec3("color", glm::vec3(0.0f, 0.0f, 0.0f));
@@ -229,9 +242,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             selectedBall = nullptr;
 
             // Find the selected ball
-            for (auto& newBall : ballList) {
-                if (isPointInCircle(mouseX, mouseY, newBall)) {
-                    selectedBall = &newBall;
+            for (auto& currentBall : ballList) {
+                if (isPointInCircle(mouseX, mouseY, currentBall)) {
+                    selectedBall = &currentBall;
                     break;
                 }
             }
