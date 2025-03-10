@@ -8,6 +8,7 @@
  */
 class Ball {
 public:
+    int id;
     glm::vec3 position; // Position of the ball in 3D space.
     glm::vec2 velocity; // Velocity of the ball in 2D (x, y) plane.
 	glm::vec3 color; // Color of the ball.
@@ -25,8 +26,8 @@ public:
      * @param r Radius of the ball.
      * @param res Number of segments for circle approximation.
      */
-    Ball(glm::vec3 pos, glm::vec2 vel,glm::vec3 col, float r, int res)
-        : position(pos), velocity(vel), radius(r), segments(res), color(col) {
+    Ball(int id, glm::vec3 pos, glm::vec2 vel,glm::vec3 col, float r, int res)
+        : id(id), position(pos), velocity(vel), radius(r), segments(res), color(col) {
     }
 
     /**
